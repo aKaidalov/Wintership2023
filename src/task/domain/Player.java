@@ -8,6 +8,11 @@ public class Player {
     private long balance;
     private List<PlayerAction> actions;
     private boolean isLegitimate;
+    private float winRate;
+    private int betCount = 0;
+    private int winCount = 0;
+
+    private PlayerAction firstIllegalAction;
 
     public Player(UUID playerId) {
         this.playerId = playerId;
@@ -30,6 +35,15 @@ public class Player {
     public long getBalance() {
         return balance;
     }
+    public void setBalance(long balance) {
+        this.balance = balance;
+    }
+    public void addToBalance(long balance) {
+        this.balance += balance;
+    }
+    public void subtractFromBalance(long balance) {
+        this.balance -= balance;
+    }
 
     //actions
     public List<PlayerAction> getActions() {
@@ -45,57 +59,29 @@ public class Player {
         this.isLegitimate = false;
     }
 
-    //PLAYER PROCESS ACTION
-    public void processAction(PlayerAction action, Match match) {
-        ActionType actionType = action.getActionType();
-        switch (actionType) {
-            case DEPOSIT:
-                deposit(action.getCoins());
-                break;
-            case BET:
-                bet(action.getCoins(), action.getSide(), match);
-                break;
-            case WITHDRAW:
-                withdraw(action.getCoins());
-                break;
-            default:
-                throw new RuntimeException("Unsupported action type: " + actionType);
-        }
+    //winRate
+    public float getWinRate() {
+        return winRate;
+    }
+    public void calculateWinRate() {
+        this.winRate = (float) winCount / betCount;
     }
 
-    private void deposit(long amountOfCoins) {
-        balance += amountOfCoins;
+    //betCount
+    public void incrementBetCount() {
+        this.betCount++;
+    }
+    //winCount
+    public void incrementWinCount() {
+        this.winCount++;
     }
 
-    private void bet(long bettingCoins, Character side, Match match) {
-        if (balance >= bettingCoins) {
-            if (match != null) { //TODO: what happens if match == null???????
-
-                char result = match.getResult();
-
-                if ((side == 'A' && result == 'A') || (side == 'B' && result == 'B')) { //TODO: side == result????
-                    //Player wins the bet
-                    balance += (long) Math.floor(bettingCoins * match.getRate(side));
-                } else if (result == 'D') {
-                    //Match is a draw, return the bet amount //TODO: 1. decide what to do with 'D' | 2. What should it do with balance?
-                } else {
-                    //Player loses the bet
-                    balance -= bettingCoins;
-                }
-            }
-        } else {
-            //Player perform illegal action: insufficient balance for the bet
-            this.isNotLegitimate();
-        }
+    //firstIllegalAction
+    public PlayerAction getFirstIllegalAction() {
+        return firstIllegalAction;
     }
-
-    private void withdraw(long amountOfCoins) {
-        if (balance >= amountOfCoins) {
-            balance -= amountOfCoins;
-        } else {
-            //Player perform illegal action: insufficient balance for withdrawal
-            this.isNotLegitimate();
-        }
+    public void setFirstIllegalAction(PlayerAction action) {
+        this.firstIllegalAction = action;
     }
 
 
@@ -104,7 +90,8 @@ public class Player {
         return "Player{" +
                 "playerId=" + playerId +
                 ", balance=" + balance +
-                ", actions=" + actions +
+                ", isLegitimate=" + isLegitimate +
+                ", winRate=" + winRate +
                 '}';
     }
 }

@@ -5,9 +5,7 @@ import task.domain.Match;
 import task.domain.Player;
 import task.domain.PlayerAction;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 
@@ -25,7 +23,7 @@ public class Helpers {
                 matches.add(newMatch);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); //TODO: Replace with throw new... ????
         }
 
         return matches;
@@ -66,7 +64,7 @@ public class Helpers {
 
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); //TODO: Replace with throw new... ????
         }
 
         return new ArrayList<>(uniquePlayers.values());
@@ -124,5 +122,63 @@ public class Helpers {
                 System.out.println(matchCount + ". " + element);
             }
         }
+    }
+
+
+    //write to file
+    public static void writeResultsToFile(List<Player> players, long casinoBalance, String filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            // Write legitimate players with their final balance and betting win rate
+            writeLegitimatePlayers(players, writer);
+
+            // Separate sections with an empty line
+            writer.newLine();
+
+            // Write illegitimate players with their first illegal operation
+            writeIllegitimatePlayers(players, writer);
+
+            // Separate sections with an empty line
+            writer.newLine();
+
+            // Write coin changes in casino host balance
+            writer.write(String.valueOf(casinoBalance));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void writeLegitimatePlayers(List<Player> players, BufferedWriter writer) throws IOException {
+        players.stream()
+                .filter(Player::isLegitimate)
+                .sorted(Comparator.comparing(Player::getPlayerId))
+                .forEach(player -> {
+                    try {
+                        writer.write(String.format("%s %d %.2f", player.getPlayerId(), player.getBalance(), player.getWinRate()));
+                        writer.newLine();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+    }
+
+    private static void writeIllegitimatePlayers(List<Player> players, BufferedWriter writer) throws IOException {
+        players.stream()
+                .filter(player -> !player.isLegitimate() && !player.getActions().isEmpty())
+                .sorted(Comparator.comparing(Player::getPlayerId))
+                .forEach(player -> {
+                    try {
+                        PlayerAction firstIllegalAction = player.getFirstIllegalAction();
+                        writer.write(String.format("%s %s %s %s %s",
+                                player.getPlayerId(),
+                                firstIllegalAction.getActionType(),
+                                firstIllegalAction.getMatchId(),
+                                firstIllegalAction.getCoins(),
+                                firstIllegalAction.getSide()));
+                        writer.newLine();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
     }
 }
