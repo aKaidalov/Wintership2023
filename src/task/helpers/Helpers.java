@@ -4,6 +4,10 @@ import task.domain.ActionType;
 import task.domain.Match;
 import task.domain.Player;
 import task.domain.PlayerAction;
+import task.exceptions.FileWriterException;
+import task.exceptions.IterationException;
+import task.exceptions.MatchDataIOException;
+import task.exceptions.PlayerDataIOException;
 
 import java.io.*;
 import java.util.*;
@@ -23,7 +27,7 @@ public class Helpers {
                 matches.add(newMatch);
             }
         } catch (IOException e) {
-            throw  new RuntimeException(e); //TODO: Make custom exceptions ????
+            throw  new MatchDataIOException("An error occurred while reading match data file", e);
         }
 
         return matches;
@@ -64,7 +68,7 @@ public class Helpers {
 
             }
         } catch (IOException e) {
-            throw  new RuntimeException(e); //TODO: Make custom exceptions ????
+            throw  new PlayerDataIOException("An error occurred while reading player data file", e);
         }
 
         return new ArrayList<>(uniquePlayers.values());
@@ -123,7 +127,7 @@ public class Helpers {
                 }
             }
         } catch (RuntimeException e) {
-           throw new RuntimeException("An exception during iteration: " + e); //TODO: Make custom exceptions ????
+           throw new IterationException("An exception during iteration", e);
         }
     }
 
@@ -145,11 +149,11 @@ public class Helpers {
             writer.write(String.valueOf(casinoBalance));
 
         } catch (IOException e) {
-            e.printStackTrace(); //TODO: Make custom exceptions ????
+            throw new FileWriterException("An error occurred while writing to the file", e);
         }
     }
 
-    private static void writeLegitimatePlayers(List<Player> players, BufferedWriter writer) throws IOException {
+    private static void writeLegitimatePlayers(List<Player> players, BufferedWriter writer) {
         players.stream()
                 .filter(Player::isLegitimate)
                 .sorted(Comparator.comparing(Player::getPlayerId))
@@ -158,12 +162,12 @@ public class Helpers {
                         writer.write(String.format("%s %d %s", player.getPlayerId(), player.getBalance(), player.getWinRate().toString()));
                         writer.newLine();
                     } catch (IOException e) {
-                        e.printStackTrace(); //TODO: Make custom exceptions ????
+                        throw new FileWriterException("Error while writing legitimate players to file", e);
                     }
                 });
     }
 
-    private static void writeIllegitimatePlayers(List<Player> players, BufferedWriter writer) throws IOException {
+    private static void writeIllegitimatePlayers(List<Player> players, BufferedWriter writer) {
         players.stream()
                 .filter(player -> !player.isLegitimate() && !player.getActions().isEmpty())
                 .sorted(Comparator.comparing(Player::getPlayerId))
@@ -178,7 +182,7 @@ public class Helpers {
                                 firstIllegalAction.getSide()));
                         writer.newLine();
                     } catch (IOException e) {
-                        e.printStackTrace(); //TODO: Make custom exceptions ????
+                        throw new FileWriterException("Error while writing illegitimate players to file", e);
                     }
                 });
     }
