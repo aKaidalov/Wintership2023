@@ -1,14 +1,16 @@
 package task.domain;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 public class Player {
 
-    private UUID playerId;
+    private final UUID playerId;
     private long balance;
     private List<PlayerAction> actions;
     private boolean isLegitimate;
-    private float winRate;
+    private BigDecimal winRate;
     private int betCount = 0;
     private int winCount = 0;
 
@@ -55,16 +57,20 @@ public class Player {
         return isLegitimate;
     }
 
-    public void isNotLegitimate() {
+    public void becomesIllegitimate() {
         this.isLegitimate = false;
     }
 
     //winRate
-    public float getWinRate() {
+    public BigDecimal getWinRate() {
         return winRate;
     }
     public void calculateWinRate() {
-        this.winRate = (float) winCount / betCount;
+        if (betCount == 0) {
+            this.winRate = BigDecimal.ZERO;
+        } else {
+            this.winRate = new BigDecimal(winCount).divide(new BigDecimal(betCount), 2, RoundingMode.HALF_DOWN);
+        }
     }
 
     //betCount

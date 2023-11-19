@@ -6,6 +6,7 @@ import task.domain.Player;
 import task.domain.PlayerAction;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,29 +16,35 @@ public class CasinoGameEngine {
     private long tempCasinoBalance = 0;
 
 
-    // pass an object reference, not an Object itself, so players will be changed
+    //After all matches were played return final casinoBalance
     public long Play(List<Match> matches, List<Player> players) {
+
         for (Player currentPlayer : players) {
-
-            for (PlayerAction currentPlayerAction : currentPlayer.getActions()) {
-
-                UUID matchId = currentPlayerAction.getMatchId();
-                Match matchForPlayerAction = getMatchByID(matchId, matches).orElse(null);
-
-                processAction(currentPlayer, currentPlayerAction, matchForPlayerAction);
-
-                if (!currentPlayer.isLegitimate() && currentPlayer.getFirstIllegalAction() == null) {
-                    currentPlayer.setFirstIllegalAction(currentPlayerAction);
-                }
-            }
-
-            if (currentPlayer.isLegitimate()) {
-                this.casinoBalance += this.tempCasinoBalance;
-                currentPlayer.calculateWinRate();
-            }
+            processPlayerActions(matches, currentPlayer);
         }
 
         return casinoBalance;
+    }
+
+    private void processPlayerActions(List<Match> matches, Player currentPlayer) {
+        for (PlayerAction currentPlayerAction : currentPlayer.getActions()) {
+
+            UUID matchId = currentPlayerAction.getMatchId();
+            Match matchForPlayerAction = getMatchByID(matchId, matches).orElse(null);
+
+            processAction(currentPlayer, currentPlayerAction, matchForPlayerAction);
+
+            if (!currentPlayer.isLegitimate() && currentPlayer.getFirstIllegalAction() == null) {
+                currentPlayer.setFirstIllegalAction(currentPlayerAction);
+            }
+        }
+
+        if (currentPlayer.isLegitimate()) {
+            updateCasinoBalance();
+            currentPlayer.calculateWinRate();
+        }
+
+        resetTempCasinoBalance(); //Reset tempCasinoBalance after updating casinoBalance
     }
 
     private Optional<Match> getMatchByID(UUID matchId, List<Match> matches) {
@@ -46,9 +53,17 @@ public class CasinoGameEngine {
                 .findFirst();
     }
 
+    private void updateCasinoBalance() {
+        this.casinoBalance += this.tempCasinoBalance;
+    }
+    private void resetTempCasinoBalance() {
+        this.tempCasinoBalance = 0;
+    }
+
 
     //PLAYER PROCESS ACTION
     public void processAction(Player player, PlayerAction action, Match match) {
+
         ActionType actionType = action.getActionType();
         switch (actionType) {
             case DEPOSIT:
@@ -66,8 +81,8 @@ public class CasinoGameEngine {
     }
 
     private void deposit(Player player, long amountOfCoins) {
-        long newBalance = player.getBalance() + amountOfCoins;
-        player.setBalance(newBalance);
+        long updatedBalance = player.getBalance() + amountOfCoins;
+        player.setBalance(updatedBalance);
     }
 
     private void bet(Player player, long bettingCoins, Character side, Match match) {
@@ -80,27 +95,46 @@ public class CasinoGameEngine {
 
             char result = match.getResult();
 
-            if ((side == 'A' && result == 'A') || (side == 'B' && result == 'B')) { //TODO: side == result????
-                //Player wins the bet
-                long payout = (long) Math.floor(bettingCoins * match.getRate(side));
-                player.addToBalance(payout);
-                player.incrementWinCount();
-
-                this.tempCasinoBalance -= bettingCoins;
-
-            } else if (result == 'D') {
-                //Match is a draw, return the bet amount //TODO: 1. decide what to do with 'D' | 2. What should it do with balance?
-            } else {
-                //Player loses the bet
-                player.subtractFromBalance(bettingCoins);
-
-                this.tempCasinoBalance += bettingCoins;
+            if (isWinningBet(side, result)) {
+                handleWinningBet(player, bettingCoins, side, match);
+            } else if (!isDraw(result)) { //if result is 'D' nothing should happen. Player can only get/lose coins
+                handleLosingBet(player, bettingCoins, match);
             }
 
         } else {
             //Player perform illegal action: insufficient balance for the bet
-            player.isNotLegitimate();
+            player.becomesIllegitimate();
         }
+    }
+
+    private boolean isWinningBet(Character side, char result) {
+        return Objects.equals(side, result);
+    }
+
+    private boolean isDraw(char result) {
+        return result == 'D';
+    }
+
+    private void handleWinningBet(Player player, long bettingCoins, Character side, Match match) {
+        //Player wins the bet
+        long payout = calculatePayout(bettingCoins, match.getRate(side));
+        player.addToBalance(payout);
+        player.incrementWinCount();
+
+        //Casino balance decreases
+        this.tempCasinoBalance -= payout;
+    }
+
+    private void handleLosingBet(Player player, long bettingCoins, Match match) {
+        //Player loses the bet
+        player.subtractFromBalance(bettingCoins);
+
+        //Casino balance increases
+        this.tempCasinoBalance += bettingCoins;
+    }
+
+    private long calculatePayout(long bettingCoins, double rate) {
+        return (long) Math.floor(bettingCoins * rate);
     }
 
     private void withdraw(Player player, long amountOfCoins) {
@@ -108,12 +142,7 @@ public class CasinoGameEngine {
             player.subtractFromBalance(amountOfCoins);
         } else {
             //Player perform illegal action: insufficient balance for withdrawal
-            player.isNotLegitimate();
+            player.becomesIllegitimate();
         }
     }
-
-    public long getCasinoBalance() {
-        return casinoBalance;
-    }
-
 }

@@ -1,13 +1,12 @@
 package task.domain;
 
-import task.domain.ActionType;
 import java.util.*;
 
 public class PlayerAction {
-    private ActionType actionType;
-    private UUID matchId;
-    private int coins;
-    private Character side;
+    private final ActionType actionType;
+    private final UUID matchId;
+    private final int coins;
+    private final Character side;
 
     public PlayerAction(ActionType actionType, UUID matchId, int coins, Character side) {
         this.actionType = actionType;

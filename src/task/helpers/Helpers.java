@@ -23,7 +23,7 @@ public class Helpers {
                 matches.add(newMatch);
             }
         } catch (IOException e) {
-            e.printStackTrace(); //TODO: Replace with throw new... ????
+            throw  new RuntimeException(e); //TODO: Make custom exceptions ????
         }
 
         return matches;
@@ -64,7 +64,7 @@ public class Helpers {
 
             }
         } catch (IOException e) {
-            e.printStackTrace(); //TODO: Replace with throw new... ????
+            throw  new RuntimeException(e); //TODO: Make custom exceptions ????
         }
 
         return new ArrayList<>(uniquePlayers.values());
@@ -95,8 +95,7 @@ public class Helpers {
 
     private static boolean isSide(String[] parts) {
         if (parts.length > 4 && !parts[4].isEmpty())
-            if ("A".equals(parts[4]) || "B".equals(parts[4]))
-                return true;
+            return "A".equals(parts[4]) || "B".equals(parts[4]);
 
         return false;
     }
@@ -107,44 +106,46 @@ public class Helpers {
         int matchCount = 0;
         int playerCount = 0;
 
-        for (T element:list) {
-            if (element instanceof Player) {
-                playerCount++;
-                System.out.println("\n" + playerCount + ". " + element);
+        try {
+            for (T element : list) {
+                if (element instanceof Player) {
+                    playerCount++;
+                    System.out.println("\n" + playerCount + ". " + element);
 
-                int actionCount = 0;
-                for (PlayerAction action : ((Player) element).getActions()) {
-                    actionCount++;
-                    System.out.println("      " + actionCount + ". " + action);
+                    int actionCount = 0;
+                    for (PlayerAction action : ((Player) element).getActions()) {
+                        actionCount++;
+                        System.out.println("      " + actionCount + ". " + action);
+                    }
+                } else {
+                    matchCount++;
+                    System.out.println(matchCount + ". " + element);
                 }
-            } else {
-                matchCount++;
-                System.out.println(matchCount + ". " + element);
             }
+        } catch (RuntimeException e) {
+           throw new RuntimeException("An exception during iteration: " + e); //TODO: Make custom exceptions ????
         }
     }
 
 
     //write to file
-    public static void writeResultsToFile(List<Player> players, long casinoBalance, String filePath) {
+    public static void writeResultsToFile(List<Player> players, long casinoBalance, String filePath) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             // Write legitimate players with their final balance and betting win rate
             writeLegitimatePlayers(players, writer);
 
-            // Separate sections with an empty line
             writer.newLine();
 
             // Write illegitimate players with their first illegal operation
             writeIllegitimatePlayers(players, writer);
 
-            // Separate sections with an empty line
             writer.newLine();
 
             // Write coin changes in casino host balance
             writer.write(String.valueOf(casinoBalance));
 
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new IOException(e); //TODO: Make custom exceptions ????
         }
     }
 
@@ -154,10 +155,10 @@ public class Helpers {
                 .sorted(Comparator.comparing(Player::getPlayerId))
                 .forEach(player -> {
                     try {
-                        writer.write(String.format("%s %d %.2f", player.getPlayerId(), player.getBalance(), player.getWinRate()));
+                        writer.write(String.format("%s %d %s", player.getPlayerId(), player.getBalance(), player.getWinRate().toString()));
                         writer.newLine();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        e.printStackTrace(); //TODO: Make custom exceptions ????
                     }
                 });
     }
@@ -177,7 +178,7 @@ public class Helpers {
                                 firstIllegalAction.getSide()));
                         writer.newLine();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        e.printStackTrace(); //TODO: Make custom exceptions ????
                     }
                 });
     }

@@ -3,10 +3,10 @@ package task.domain;
 import java.util.*;
 
 public class Match {
-    private UUID matchId;
-    private double rateA;
-    private double rateB;
-    private char result;
+    private final UUID matchId;
+    private final double rateA;
+    private final double rateB;
+    private final char result;
 
 
     public Match(UUID matchId, double rateA, double rateB, char result) {
