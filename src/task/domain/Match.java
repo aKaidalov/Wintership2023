@@ -26,13 +26,13 @@ public class Match {
     public double getRate(Character side) {
 
         if (side == null) {
-            throw new IllegalArgumentException("Side cannot be null.");
+            throw new IllegalArgumentException("Side cannot be null."); //TODO: Make custom exceptions ????
         } else if (Objects.equals(side, 'A')) {
             return rateA;
         } else if (Objects.equals(side, 'B')) {
             return rateB;
         } else {
-            throw new IllegalArgumentException("Illegal argument: " + side + ". Must be 'A' or 'B'.");
+            throw new IllegalArgumentException("Illegal argument: " + side + ". Must be 'A' or 'B'."); //TODO: Make custom exceptions ????
         }
     }
 

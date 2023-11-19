@@ -129,7 +129,7 @@ public class Helpers {
 
 
     //write to file
-    public static void writeResultsToFile(List<Player> players, long casinoBalance, String filePath) throws IOException {
+    public static void writeResultsToFile(List<Player> players, long casinoBalance, String filePath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             // Write legitimate players with their final balance and betting win rate
             writeLegitimatePlayers(players, writer);
@@ -145,7 +145,7 @@ public class Helpers {
             writer.write(String.valueOf(casinoBalance));
 
         } catch (IOException e) {
-            throw new IOException(e); //TODO: Make custom exceptions ????
+            e.printStackTrace(); //TODO: Make custom exceptions ????
         }
     }
 

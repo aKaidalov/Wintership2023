@@ -76,7 +76,7 @@ public class CasinoGameEngine {
                 withdraw(player, action.getCoins());
                 break;
             default:
-                throw new RuntimeException("Unsupported action type: " + actionType);
+                throw new RuntimeException("Unsupported action type: " + actionType); //TODO: Make custom exceptions ????
         }
     }
 
@@ -90,7 +90,7 @@ public class CasinoGameEngine {
 
         if (player.getBalance() >= bettingCoins) {
             if (match == null) {
-                throw new RuntimeException("Match has an empty value!");
+                throw new RuntimeException("Match has an empty value!"); //TODO: Make custom exceptions ????
             }
 
             char result = match.getResult();
